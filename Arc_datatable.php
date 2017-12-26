@@ -3,7 +3,7 @@
  *
  * @package	Codeigniter Library for Datatable Serverside JSON Generator
  * @author	Fuad Ar-Radhi
- * @link	https://github.com/arradyscode/arc-datatable
+ * @link	https://github.com/arradyscode/ci-datatable-serverside
  * @since	Version 2.0.0
  *
  * @filesource
