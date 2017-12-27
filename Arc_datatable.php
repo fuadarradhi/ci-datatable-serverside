@@ -110,11 +110,8 @@ class Arc_datatable {
 	public function get_json()
 	{	
 		$param 	= $this->get_input();
-
 		$column = $this->explode_columns();
-
 		$query 	= $this->build_query( $param, $column);
-
 		$data  	= $this->get_data($param, $column, $query);
 		$total 	= $this->get_total($query);
 
@@ -215,8 +212,8 @@ class Arc_datatable {
 			$query = null;
 		}
 
-		$original_query = str_replace('__where__', $query ? ' WHERE '.$query :'' , $original_query);
-		$original_query = str_replace('__and_where__', $query ? ' AND '.$query :'' , $original_query);
+		$original_query = str_replace('__where__', $query ? ' WHERE ('.$query.') ' :'' , $original_query);
+		$original_query = str_replace('__and_where__', $query ? ' AND ('.$query.') ' :'' , $original_query);
 
 		$count_query = $original_query;
 		$count_query = str_replace('__order__', '', $count_query);
