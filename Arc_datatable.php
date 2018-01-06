@@ -125,6 +125,19 @@ class Arc_datatable {
 
 	}
 
+	/**
+	 * Gunakan Lines saat Output 
+	 * 
+	 * @return JSON
+	 */
+	public function set_lines($lines = false)
+	{	
+		$this->lines = $lines;
+
+		return $this;
+
+	}
+
 
 	/**
 	 * Fungsi Utama, Get Json 
@@ -276,12 +289,15 @@ class Arc_datatable {
 		$line = $param['page_offset']+1;
 		foreach ($datas as $data)
 		{
+
+			$data['line'] = $line;
+
 			$loop = array();
 			foreach ($column['column_display'] as $column_display)
 			{
 				if ($column_display == '__lines__')
 				{
-					$value = ($line++).'.'; 
+					$value = ($line).'.'; 
 					$column_display = 'line';
 				}
 				else
@@ -308,6 +324,7 @@ class Arc_datatable {
 				
 			}
 			
+			$line++;
 			$return[] = $loop;
 		}
 		
