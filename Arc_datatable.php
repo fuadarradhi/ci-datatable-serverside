@@ -47,6 +47,13 @@ class Arc_datatable {
 	 */
 	private $virtual = array();
 
+	/**
+	 * Key Value
+	 * 
+	 * @var array
+	 */
+	private $use_key = false;
+
 
 	/**
 	 * Init library
@@ -65,6 +72,7 @@ class Arc_datatable {
 	public function set_query( $query = '')
 	{
 		$this->query_string = $query;
+		return $this;
 	}
 
 
@@ -98,6 +106,35 @@ class Arc_datatable {
 			$clean = $this->clean_column($column);
 			$this->virtual[$clean['clean_column']] = $function_callback;
 		}
+
+		return $this;
+
+	}
+
+
+	/**
+	 * Gunakan Key saat Output 
+	 * 
+	 * @return JSON
+	 */
+	public function set_key($use_key = false)
+	{	
+		$this->use_key = $use_key;
+
+		return $this;
+
+	}
+
+	/**
+	 * Gunakan Lines saat Output 
+	 * 
+	 * @return JSON
+	 */
+	public function set_lines($lines = false)
+	{	
+		$this->lines = $lines;
+
+		return $this;
 
 	}
 
@@ -219,10 +256,10 @@ class Arc_datatable {
 		$count_query = str_replace('__order__', '', $count_query);
 		$count_query = str_replace('__limit_offset__', '', $count_query);
 
-		$column_order = $column['column_order'][$order_index];
+		$column_order = @$column['column_order'][$order_index];
 		$original_query = str_replace('__order__', 
 			($order_isset && $column_order != null) ? ' ORDER BY '.$column_order.' '.$order_dir:'' , $original_query);
-
+		
 		$query_limit = ($page_limit == -1) ? '':' LIMIT '.$page_limit.' OFFSET '.$page_offset;
 		$original_query = str_replace('__limit_offset__',$query_limit, $original_query);
 
@@ -253,28 +290,42 @@ class Arc_datatable {
 		$line = $param['page_offset']+1;
 		foreach ($datas as $data)
 		{
+
+			$data['line'] = $line;
+
 			$loop = array();
-			
 			foreach ($column['column_display'] as $column_display)
 			{
 				if ($column_display == '__lines__')
 				{
-					$loop[] = ($line++).'.'; 
+					$value = ($line).'.'; 
+					$column_display = 'line';
 				}
 				else
 				{
 					if(in_array($column_display, array_keys($this->virtual)))
 					{
 						$object = json_decode(json_encode($data), FALSE);
-						$loop[] = $this->virtual[$column_display]($object);
+						$value = $this->virtual[$column_display]($object);
 					}
 					else
 					{
-						$loop[] = $data[$column_display];
+						$value = $data[$column_display];
 					}
 				}
+
+				if ($this->use_key)
+				{
+					$loop[$column_display] = $value;
+				}
+				else
+				{
+					$loop[] = $value;
+				}
+				
 			}
 			
+			$line++;
 			$return[] = $loop;
 		}
 		
