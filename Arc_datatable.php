@@ -4,7 +4,7 @@
  * @package	Codeigniter Library for Datatable Serverside JSON Generator
  * @author	Fuad Ar-Radhi
  * @link	https://github.com/arradyscode/ci-datatable-serverside
- * @since	Version 2.0.0
+ * @since	Version 2.2.0
  *
  * @filesource
  */
@@ -14,14 +14,14 @@ class Arc_datatable {
 
 	/**
 	 * Instance dari Codeigniter
-	 * 
+	 *
 	 * @var instance
 	 */
 	private $arradyscode;
 
 	/**
 	 * Query yang akan digenerate untuk json datatable
-	 * 
+	 *
 	 * @var string
 	 */
 	private $query_string;
@@ -29,7 +29,7 @@ class Arc_datatable {
 	/**
 	 * Kolom yang akan diproses, ditampilkan, digunakan pada
 	 * pencarian dan ordering.
-	 * 
+	 *
 	 * @var array of string
 	 */
 	private $columns;
@@ -42,18 +42,24 @@ class Arc_datatable {
 
 	/**
 	 * Kolom virtual
-	 * 
+	 *
 	 * @var array
 	 */
 	private $virtual = array();
 
 	/**
 	 * Key Value
-	 * 
-	 * @var array
+	 *
+	 * @var boolean
 	 */
 	private $use_key = false;
 
+	/**
+	 * Default Order
+	 *
+	 * @var string
+	 */
+	private $default_order;
 
 	/**
 	 * Init library
@@ -66,7 +72,7 @@ class Arc_datatable {
 
 	/**
 	 * Set Query yang akan digenerate menjadi json
-	 * 
+	 *
 	 * @param string $query
 	 */
 	public function set_query( $query = '')
@@ -77,8 +83,21 @@ class Arc_datatable {
 
 
 	/**
+	 * Set Default order jika tidak ada order dipilih user
+	 *
+	 * @param string $default
+	 */
+	public function set_default_order( $default = '')
+	{
+		$this->default_order = $default;
+		return $this;
+	}
+
+
+
+	/**
 	 * Set Kolom-kolom yang akan diproses, ditampilkan, dijadikan order dan pencarian
-	 * 
+	 *
 	 * @param array atau string $column
 	 * @param lambda $function_callback
 	 */
@@ -113,12 +132,12 @@ class Arc_datatable {
 
 
 	/**
-	 * Gunakan Key saat Output 
-	 * 
+	 * Gunakan Key saat Output
+	 *
 	 * @return JSON
 	 */
 	public function set_key($use_key = false)
-	{	
+	{
 		$this->use_key = $use_key;
 
 		return $this;
@@ -126,12 +145,12 @@ class Arc_datatable {
 	}
 
 	/**
-	 * Gunakan Lines saat Output 
-	 * 
+	 * Gunakan Lines saat Output
+	 *
 	 * @return JSON
 	 */
 	public function set_lines($lines = false)
-	{	
+	{
 		$this->lines = $lines;
 
 		return $this;
@@ -140,12 +159,12 @@ class Arc_datatable {
 
 
 	/**
-	 * Fungsi Utama, Get Json 
-	 * 
+	 * Fungsi Utama, Get Json
+	 *
 	 * @return JSON
 	 */
 	public function get_json()
-	{	
+	{
 		$param 	= $this->get_input();
 		$column = $this->explode_columns();
 		$query 	= $this->build_query( $param, $column);
@@ -159,7 +178,7 @@ class Arc_datatable {
 
 	/**
 	 * Extract Parameter dari Datatable
-	 * 
+	 *
 	 * @return array of variant
 	 */
 	private function get_input()
@@ -169,12 +188,12 @@ class Arc_datatable {
 		$param = array
 		(
 			'search_isset' 	=> isset($get['search']),
-			'search_value' 	=> isset($get['search']) ? $get['search']['value'] : '',
-			'page_limit'	=> isset($get['length']) ? $get['length']:10,
-			'page_offset'	=> isset($get['start']) ? $get['start']:0,
+			'search_value' 	=> isset($get['search']) ? $this->arradyscode->security->xss_clean($get['search']['value']) : '',
+			'page_limit'	=> isset($get['length']) ? (int) $this->arradyscode->security->xss_clean($get['length']):10,
+			'page_offset'	=> isset($get['start']) ? (int) $this->arradyscode->security->xss_clean($get['start']):0,
 			'order_isset'	=> isset($get['order']),
-			'order_index'	=> isset($get['order']) ? $get['order'][0]['column']:'',
-			'order_dir'		=> isset($get['order']) ? $get['order'][0]['dir']:'',
+			'order_index'	=> isset($get['order']) ? $this->arradyscode->security->xss_clean($get['order'][0]['column']):'',
+			'order_dir'		=> isset($get['order']) ? $this->arradyscode->security->xss_clean($get['order'][0]['dir']):'',
 		);
 
 		return $param;
@@ -184,7 +203,7 @@ class Arc_datatable {
 
 	/**
 	 * Pisah kolom-kolom menjadi 'order','search' dan 'display'
-	 * 
+	 *
 	 * @return array of string
 	 */
 	private function explode_columns(){
@@ -192,14 +211,16 @@ class Arc_datatable {
 		$column_display = $this->lines ? array('__lines__') : array();
 		$column_search  = $this->lines ? array(null) : array();
 		$column_order   = $this->lines ? array(null) : array();
+		$column_hidden   = $this->lines ? array(null) : array();
 
 		foreach ($this->columns as $column)
-		{	
+		{
 			$proses_column    = $this->clean_column($column);
 
 			$column_display[] = $proses_column['clean_column'];
 			$column_search[]  = in_array('s', $proses_column['attribute']) ? $proses_column['original_column']:null;
 			$column_order[]	  = in_array('o', $proses_column['attribute']) ? $proses_column['original_column']:null;
+			$column_hidden[]  = in_array('h', $proses_column['attribute']) ? $proses_column['original_column']:null;
 
 		}
 
@@ -208,6 +229,7 @@ class Arc_datatable {
 			'column_display' => $column_display,
 			'column_search'  => $column_search,
 			'column_order' 	 => $column_order,
+			'column_hidden'  => $column_hidden,
 		);
 
 		return $columns;
@@ -217,7 +239,7 @@ class Arc_datatable {
 
 	/**
 	 * Build query menjadi query MariaDB/MySQL
-	 * 
+	 *
 	 * @param  array $param  parameter dari datatable
 	 * @param  array $column kolom sudah dipilah
 	 * @return array $return
@@ -237,7 +259,7 @@ class Arc_datatable {
 				if( ! empty($col))
 				{
 					$query .= $col . ' LIKE "%'.$search_value.'%" OR ';
-					$count++; 
+					$count++;
 				}
 			}
 			$query  = rtrim($query ,'OR ');
@@ -252,14 +274,22 @@ class Arc_datatable {
 		$original_query = str_replace('__where__', $query ? ' WHERE ('.$query.') ' :'' , $original_query);
 		$original_query = str_replace('__and_where__', $query ? ' AND ('.$query.') ' :'' , $original_query);
 
+		$column_order = @$column['column_order'][$order_index];
+		$default_order = $this->default_order;
+
+		if ($order_isset && $column_order != null){
+			$original_query = str_replace('__order__',' ORDER BY '.$column_order.' '.$order_dir, $original_query);
+			$original_query = str_replace('__order_and__',' ORDER BY '.$column_order.' '.$order_dir, $original_query);
+			$original_query = str_replace('__and_order__',$column_order.' '.$order_dir, $original_query);
+		}elseif( ! empty($default_order)){
+			$original_query = str_replace('__order__',' ORDER BY '.$default_order, $original_query);
+			$original_query = str_replace('__order_and__',' ORDER BY '.$default_order, $original_query);
+			$original_query = str_replace('__and_order__',$default_order, $original_query);
+		}
+
 		$count_query = $original_query;
-		$count_query = str_replace('__order__', '', $count_query);
 		$count_query = str_replace('__limit_offset__', '', $count_query);
 
-		$column_order = @$column['column_order'][$order_index];
-		$original_query = str_replace('__order__', 
-			($order_isset && $column_order != null) ? ' ORDER BY '.$column_order.' '.$order_dir:'' , $original_query);
-		
 		$query_limit = ($page_limit == -1) ? '':' LIMIT '.$page_limit.' OFFSET '.$page_offset;
 		$original_query = str_replace('__limit_offset__',$query_limit, $original_query);
 
@@ -276,7 +306,7 @@ class Arc_datatable {
 
 	/**
 	 * Execute query untuk mengambil data
-	 * 
+	 *
 	 * @param  array $param  parameter dari datatable
 	 * @param  array $column kolom telah dipisah
 	 * @param  array $query  query
@@ -285,7 +315,7 @@ class Arc_datatable {
 	private function get_data($param, $column, $query)
 	{
 		$datas = $this->arradyscode->db->query($query['original_query'])->result_array();
-		
+
 		$return = array();
 		$line = $param['page_offset']+1;
 		foreach ($datas as $data)
@@ -296,9 +326,11 @@ class Arc_datatable {
 			$loop = array();
 			foreach ($column['column_display'] as $column_display)
 			{
+				if ( in_array($column_display, $column['column_hidden']) ) continue;
+
 				if ($column_display == '__lines__')
 				{
-					$value = ($line).'.'; 
+					$value = ($line).'.';
 					$column_display = 'line';
 				}
 				else
@@ -322,21 +354,21 @@ class Arc_datatable {
 				{
 					$loop[] = $value;
 				}
-				
+
 			}
-			
+
 			$line++;
 			$return[] = $loop;
 		}
-		
+
 		return $return;
-	
+
 	}
 
 
 	/**
 	 * Execute query untuk mengambil total data
-	 * 
+	 *
 	 * @param  array $query
 	 * @return integer
 	 */
@@ -348,10 +380,10 @@ class Arc_datatable {
 
 	/**
 	 * Generate JSON
-	 * 
-	 * @param  array $data 
+	 *
+	 * @param  array $data
 	 * @param  int $total
-	 * @return 
+	 * @return
 	 */
 	private function generate_json($data, $total)
 	{
@@ -359,7 +391,7 @@ class Arc_datatable {
 		$get = $this->arradyscode->input->get();
 
 		header('Content-Type: application/json');
-		$json['draw'] = (isset($get['draw'])) ? $get['draw'] : 1;
+		$json['draw'] = (isset($get['draw'])) ? (int) $get['draw'] : 1;
 		$json['recordsTotal'] = $total;
 		$json['recordsFiltered'] = $total;
 		$json['data'] = $data;
@@ -370,7 +402,7 @@ class Arc_datatable {
 
 	/**
 	 * Clean column dari attribute
-	 * 
+	 *
 	 * @param  string $column
 	 * @return array of string
 	 */
