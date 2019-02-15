@@ -285,6 +285,10 @@ class Arc_datatable {
 			$original_query = str_replace('__order__',' ORDER BY '.$default_order, $original_query);
 			$original_query = str_replace('__order_and__',' ORDER BY '.$default_order, $original_query);
 			$original_query = str_replace('__and_order__',$default_order, $original_query);
+		}else{
+			$original_query = str_replace('__order__','', $original_query);
+			$original_query = str_replace('__order_and__','', $original_query);
+			$original_query = str_replace('__and_order__','', $original_query);
 		}
 
 		$count_query = $original_query;
