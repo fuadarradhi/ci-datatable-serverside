@@ -4,7 +4,7 @@
  * @package	Codeigniter Library for Datatable Serverside JSON Generator
  * @author	Fuad Ar-Radhi
  * @link	https://github.com/arradyscode/ci-datatable-serverside
- * @since	Version 2.2.0
+ * @since	Version 2.2.1
  *
  * @filesource
  */
@@ -275,16 +275,11 @@ class Arc_datatable {
 		$original_query = str_replace('__and_where__', $query ? ' AND ('.$query.') ' :'' , $original_query);
 
 		$column_order = @$column['column_order'][$order_index];
-		$default_order = $this->default_order;
 
 		if ($order_isset && $column_order != null){
 			$original_query = str_replace('__order__',' ORDER BY '.$column_order.' '.$order_dir, $original_query);
 			$original_query = str_replace('__order_and__',' ORDER BY '.$column_order.' '.$order_dir, $original_query);
-			$original_query = str_replace('__and_order__',$column_order.' '.$order_dir, $original_query);
-		}elseif( ! empty($default_order)){
-			$original_query = str_replace('__order__',' ORDER BY '.$default_order, $original_query);
-			$original_query = str_replace('__order_and__',' ORDER BY '.$default_order, $original_query);
-			$original_query = str_replace('__and_order__',$default_order, $original_query);
+			$original_query = str_replace('__and_order__',', '.$column_order.' '.$order_dir, $original_query);
 		}else{
 			$original_query = str_replace('__order__','', $original_query);
 			$original_query = str_replace('__order_and__','', $original_query);
