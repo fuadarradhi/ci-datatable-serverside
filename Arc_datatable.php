@@ -55,13 +55,6 @@ class Arc_datatable {
 	private $use_key = false;
 
 	/**
-	 * Default Order
-	 *
-	 * @var string
-	 */
-	private $default_order;
-
-	/**
 	 * Init library
 	 */
 	public function __construct()
@@ -80,19 +73,6 @@ class Arc_datatable {
 		$this->query_string = $query;
 		return $this;
 	}
-
-
-	/**
-	 * Set Default order jika tidak ada order dipilih user
-	 *
-	 * @param string $default
-	 */
-	public function set_default_order( $default = '')
-	{
-		$this->default_order = $default;
-		return $this;
-	}
-
 
 
 	/**
