@@ -4,7 +4,7 @@
  * @package	Codeigniter Library for Datatable Serverside JSON Generator
  * @author	Fuad Ar-Radhi
  * @link	https://github.com/arradyscode/ci-datatable-serverside
- * @since	Version 2.2.1
+ * @since	Version 2.2.2
  *
  * @filesource
  */
@@ -157,6 +157,18 @@ class Arc_datatable {
 
 
 	/**
+	 * Clean value dari XSS injection
+	 *
+	 * @param  value
+	 * @return cleaned value
+	 */
+	private function xss_clean($value)
+	{
+		return $this->arradyscode->security->xss_clean($value);
+	}
+
+
+	/**
 	 * Extract Parameter dari Datatable
 	 *
 	 * @return array of variant
@@ -168,12 +180,14 @@ class Arc_datatable {
 		$param = array
 		(
 			'search_isset' 	=> isset($get['search']),
-			'search_value' 	=> isset($get['search']) ? $this->arradyscode->security->xss_clean($get['search']['value']) : '',
-			'page_limit'	=> isset($get['length']) ? (int) $this->arradyscode->security->xss_clean($get['length']):10,
-			'page_offset'	=> isset($get['start']) ? (int) $this->arradyscode->security->xss_clean($get['start']):0,
 			'order_isset'	=> isset($get['order']),
-			'order_index'	=> isset($get['order']) ? $this->arradyscode->security->xss_clean($get['order'][0]['column']):'',
-			'order_dir'		=> isset($get['order']) ? $this->arradyscode->security->xss_clean($get['order'][0]['dir']):'',
+
+			'page_limit'	=> isset($get['length']) ? (int) $this->xss_clean($get['length']) : 10,
+			'page_offset'	=> isset($get['start'])  ? (int) $this->xss_clean($get['start'])  : 0,
+
+			'search_value' 	=> isset($get['search']) ? $this->xss_clean($get['search']['value']) 	: '',
+			'order_index'	=> isset($get['order'])  ? $this->xss_clean($get['order'][0]['column']) : '',
+			'order_dir'		=> isset($get['order'])  ? $this->xss_clean($get['order'][0]['dir']) 	: '',
 		);
 
 		return $param;
@@ -191,17 +205,16 @@ class Arc_datatable {
 		$column_display = $this->lines ? array('__lines__') : array();
 		$column_search  = $this->lines ? array(null) : array();
 		$column_order   = $this->lines ? array(null) : array();
-		$column_hidden   = $this->lines ? array(null) : array();
 
 		foreach ($this->columns as $column)
 		{
-			$proses_column    = $this->clean_column($column);
+			$c = $this->clean_column($column);
 
-			$column_display[] = $proses_column['clean_column'];
-			$column_search[]  = in_array('s', $proses_column['attribute']) ? $proses_column['original_column']:null;
-			$column_order[]	  = in_array('o', $proses_column['attribute']) ? $proses_column['original_column']:null;
-			$column_hidden[]  = in_array('h', $proses_column['attribute']) ? $proses_column['original_column']:null;
-
+			if ( ! in_array('h', $c['attribute'])):
+				$column_display[] = $c['clean_column'];
+				$column_order[]	  = in_array('o', $c['attribute']) ? $c['original_column'] : null;
+			endif;
+			$column_search[]  = in_array('s', $c['attribute']) ? $c['original_column'] : null;
 		}
 
 		$columns = array
@@ -209,7 +222,6 @@ class Arc_datatable {
 			'column_display' => $column_display,
 			'column_search'  => $column_search,
 			'column_order' 	 => $column_order,
-			'column_hidden'  => $column_hidden,
 		);
 
 		return $columns;
@@ -251,25 +263,25 @@ class Arc_datatable {
 			$query = null;
 		}
 
-		$original_query = str_replace('__where__', $query ? ' WHERE ('.$query.') ' :'' , $original_query);
-		$original_query = str_replace('__and_where__', $query ? ' AND ('.$query.') ' :'' , $original_query);
+		$original_query = str_replace('__where__', $query ? " WHERE ($query) " :'' , $original_query);
+		$original_query = str_replace('__and_where__', $query ? " AND ($query) " :'' , $original_query);
 
 		$column_order = @$column['column_order'][$order_index];
 
 		if ($order_isset && $column_order != null){
-			$original_query = str_replace('__order__',' ORDER BY '.$column_order.' '.$order_dir, $original_query);
-			$original_query = str_replace('__order_and__',' ORDER BY '.$column_order.' '.$order_dir, $original_query);
-			$original_query = str_replace('__and_order__',', '.$column_order.' '.$order_dir, $original_query);
+			$original_query = str_replace('__order__'," ORDER BY $column_order $order_dir", $original_query);
+			$original_query = str_replace('__order_and__'," ORDER BY $column_order $order_dir, ", $original_query);
+			$original_query = str_replace('__and_order__',", $column_order $order_dir", $original_query);
 		}else{
 			$original_query = str_replace('__order__','', $original_query);
-			$original_query = str_replace('__order_and__','', $original_query);
+			$original_query = str_replace('__order_and__',' ORDER BY ', $original_query);
 			$original_query = str_replace('__and_order__','', $original_query);
 		}
 
 		$count_query = $original_query;
 		$count_query = str_replace('__limit_offset__', '', $count_query);
 
-		$query_limit = ($page_limit == -1) ? '':' LIMIT '.$page_limit.' OFFSET '.$page_offset;
+		$query_limit = ($page_limit == -1) ? '':" LIMIT $page_limit OFFSET ".$page_offset;
 		$original_query = str_replace('__limit_offset__',$query_limit, $original_query);
 
 		$return = array
@@ -305,7 +317,6 @@ class Arc_datatable {
 			$loop = array();
 			foreach ($column['column_display'] as $column_display)
 			{
-				if ( in_array($column_display, $column['column_hidden']) ) continue;
 
 				if ($column_display == '__lines__')
 				{
