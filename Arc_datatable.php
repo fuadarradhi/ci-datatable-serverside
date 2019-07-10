@@ -35,7 +35,15 @@ class Arc_datatable {
 	private $columns;
 
 	/**
+	 * Kolom yang juga dimasukkan ke pencarian
+	 *
+	 * @var array
+	 */
+	private $custom_search = array();
+
+	/**
 	 * Gunakan kolom pertama sebagai baris
+	 *
 	 * @var boolean
 	 */
 	private $lines = true;
@@ -246,7 +254,8 @@ class Arc_datatable {
 		{
 			$query = ' ( ';
 			$count = 0;
-			foreach($column['column_search'] as $col)
+			$search_defined_field = array_merge($column['column_search'], $this->custom_search);
+			foreach($search_defined_field as $col)
 			{
 				if( ! empty($col))
 				{
@@ -402,6 +411,20 @@ class Arc_datatable {
 		$original_column = str_replace(@$attribute[0], '', $column);
 
 		$arr_attribute = explode('|', @$attribute[1]);
+		foreach ($arr_attribute as $k => $att) {
+
+			preg_match('/\[([^)]*)\]/', $att, $search);
+			if ($search){
+				$s = explode(',', @$search[1]);
+				foreach ($s as $s) {
+					if ( ! in_array(trim($s), $this->custom_search) ){
+						$this->custom_search[] = trim($s);
+					}
+				};
+			}
+			$arr_attribute[$k] = str_replace(@$search[0], '', $att);
+		}
+		$arr_attribute = array_map("trim", $arr_attribute);
 		$dot_position = strpos($original_column, ".");
 
 		$column= ($dot_position !== false) ? substr($original_column,$dot_position+1):$original_column;
@@ -421,4 +444,5 @@ class Arc_datatable {
 
 		return $return;
 	}
+
 }
