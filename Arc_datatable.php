@@ -417,8 +417,10 @@ class Arc_datatable {
 			if ($search){
 				$s = explode(',', @$search[1]);
 				foreach ($s as $s) {
-					if ( ! in_array(trim($s), $this->custom_search) ){
-						$this->custom_search[] = trim($s);
+					$ss = explode(' as ', $s);
+					$ss = @$ss[0];
+					if ( ! in_array($ss, $this->custom_search) ){
+						$this->custom_search[] = $ss;
 					}
 				};
 			}
