@@ -195,7 +195,7 @@ class Arc_datatable {
 
 			'search_value' 	=> isset($get['search']) ? $this->xss_clean($get['search']['value']) 	: '',
 			'order_index'	=> isset($get['order'])  ? $this->xss_clean($get['order'][0]['column']) : '',
-			'order_dir'		=> isset($get['order'])  ? $this->xss_clean($get['order'][0]['dir']) 	: '',
+			'order_dir'	=> isset($get['order'])  ? $this->xss_clean($get['order'][0]['dir']) 	: '',
 		);
 
 		return $param;
