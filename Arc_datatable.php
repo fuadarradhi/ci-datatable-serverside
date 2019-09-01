@@ -373,7 +373,9 @@ class Arc_datatable {
 	 */
 	private function get_total($query)
 	{
-		return $this->arradyscode->db->query($query['count_query'])->num_rows();
+		return $this->arradyscode->db->query(
+			"SELECT COUNT(*) as total FROM (" . $query['count_query'] . ") zarc"
+		)->row('total');
 	}
 
 
